@@ -48,6 +48,11 @@ function component(width, height, color, x, y, type) {
             context.fillRect(this.x, this.y, this.width, this.height);
         }
     }
+    this.updateText = function() {
+        let context = gameBoard.context;
+        context.clearRect(this.x, this.y, this.y, this.x);
+        this.update();
+    }
     this.newPosition = function(position) {
         let context = gameBoard.context;
         context.clearRect(this.x, this.y, this.width, this.height);
@@ -57,7 +62,10 @@ function component(width, height, color, x, y, type) {
             }
         }
         else if(position === 'down') {
-            if(this.y < 1020) {
+            if(this.y < 1020 && type === "player") {
+                this.y = this.y + 20;
+            }
+            else if(type === "enemy") {
                 this.y = this.y + 20;
             }
         }
@@ -79,7 +87,7 @@ function component(width, height, color, x, y, type) {
 gameBoard.startButton.addEventListener("click", () => {
     let timeAmount = 0;
     gameBoard.startButton.style.display = "none";
-    player = new component(70, 50, "blue", 920, 1000);
+    player = new component(70, 50, "blue", 920, 1000, "player");
     player.update();
     score = new component("50px", "Arial", "white", 5, 45, "text");
     time = new component("50px", "Arial", "white", 5, 95, "text");
@@ -95,6 +103,16 @@ gameBoard.startButton.addEventListener("click", () => {
         score.update();
         player.update();
     }, 1000);
+    setInterval(function() {
+        let x = Math.floor((Math.random() * 1840) + 1);
+        if(x < 100) {
+            x = 100;
+        } 
+        let enemy = new component(70, 50, "green", x, 20, "enemy");
+        setInterval(function() {
+            enemy.newPosition("down");
+        }, 1000);
+    }, 2000);
 });
 
 document.onkeydown = function(e) {
