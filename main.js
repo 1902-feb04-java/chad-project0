@@ -9,18 +9,86 @@ function setUpBoard () {
 var gameBoard = {
     startButton: document.createElement("button"),
     canvas: document.createElement("canvas"),
+    restartButton: document.createElement("button"),
+    endGameHeader: document.createElement("h1"),
     setUpBoard: function() {
+        gameOver = false;
+        this.restartButton.id = "restartButton";
+        this.endGameHeader.id = "gameOverHeader";
         this.startButton.id = "startButton";
         this.startButton.innerHTML = "Start";
+        this.restartButton.innerHTML = "Restart";
+        this.endGameHeader.innerHTML = "Game Over";
         this.canvas.id = "gameBoard";
         this.canvas.width = "1920";
         this.canvas.height = "1080";
         this.context = this.canvas.getContext("2d");
         document.body.insertBefore(this.canvas, document.body.childNodes[0]);
         document.body.insertBefore(this.startButton, document.body.childNodes[1]);
+        document.body.insertBefore(this.restartButton, document.body.childNodes[2]);
+        document.body.insertBefore(this.endGameHeader, document.body.childNodes[3]);
     },
     clearBoard: function() {
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    },
+    startGame: function() {
+        this.context.globalAlpha = 1.0;
+        this.context.fillStyle = "black";
+        this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        let timeAmount = 0;
+        this.startButton.style.display = "none";
+        player = new component(70, 50, "blue", 920, 1000, "player");
+        player.update();
+        score = new component("50px", "Arial", "white", 5, 45, "text");
+        time = new component("50px", "Arial", "white", 5, 95, "text");
+        score.text = "Score: 0";
+        score.update();
+        time.text = "Time: 0";
+        time.update();
+        /* Tommorrow, try to move these interval functions to global scope 
+        and for the moveEnemies function, iterate over the ememies array
+        and then move those elements in the array down*/
+        let timeUpdate = setInterval(function() {
+            if(gameOver) {
+                clearInterval(timeUpdate);
+            }
+            else {
+                timeAmount++;
+                gameBoard.clearBoard();
+                time.text = `Time: ${timeAmount}`;
+                time.update();
+                score.update();
+                player.update();
+            }
+        }, 1000);
+        let createEnemies = setInterval(function() {
+            if(gameOver) {
+                clearInterval(createEnemies);
+            }
+            else {
+                let x = Math.floor((Math.random() * 1840) + 1);
+                var enemy = new component(70, 50, "green", x, 20, "enemy");
+                enemy.update();
+                enemies.push(enemy);
+            }
+            let moveEnemies = setInterval(function() {
+                if(gameOver) {
+                    clearInterval(moveEnemies);
+                }
+                else {
+                    enemy.newPosition("down");
+                    enemy.didLeaveCanvas();
+                }
+            }, 1000);
+        }, 2000);
+    },
+    endGame: function() {
+        this.context.globalAlpha = 0.2;
+        this.context.fillStyle = "grey";
+        this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        this.restartButton.style.display = "block";
+        this.endGameHeader.style.display = "block";
+        enemies = [];
     }
 }
 
@@ -30,6 +98,10 @@ var player;
 var score;
 //the time player has played
 var time;
+//array of all enemies on the canvas
+var enemies = [];
+//Var to end the game if true
+var gameOver = false;
 
 //function to create all components
 function component(width, height, color, x, y, type) {
@@ -47,11 +119,6 @@ function component(width, height, color, x, y, type) {
         else {
             context.fillRect(this.x, this.y, this.width, this.height);
         }
-    }
-    this.updateText = function() {
-        let context = gameBoard.context;
-        context.clearRect(this.x, this.y, this.y, this.x);
-        this.update();
     }
     this.newPosition = function(position) {
         let context = gameBoard.context;
@@ -81,11 +148,47 @@ function component(width, height, color, x, y, type) {
         }
         this.update();
     }
+    this.didCrash = function() {
+        let myLeft = this.x
+        let myRight = this.x + this.width;
+        let myTop = this.y;
+        let myBottom = this.y + this.height;
+        for(let i = 0; i < enemies.length; i++) {
+            let otherTop = enemies[i].y;
+            let otherBottom = enemies[i].y + enemies[i].height;
+            let otherRight = enemies[i].x + enemies[i].width;
+            let otherLeft = enemies[i].x;
+            if((myBottom > otherTop) && (myTop < otherBottom) && (myRight > otherLeft) && (myLeft < otherRight)) {
+                gameOver = true;
+                gameBoard.clearBoard();
+                gameBoard.endGame();
+            }
+        }
+    }
+    this.didLeaveCanvas = function() {
+        if(this.y > 1000) {
+            let context = gameBoard.context;
+            let index  = enemies.indexOf(this);
+            if(index > -1) {
+                enemies.splice(index, 1);
+            }
+            context.clearRect(this.x, this.y, this.width, this.height);
+        }
+    }
 }
+
+//checks to see if player restarts the game
+gameBoard.restartButton.addEventListener("click", () => {
+    document.getElementById("restartButton").style.display = "none";
+    document.getElementById("gameOverHeader").style.display = "none";
+    gameOver = false;
+    gameBoard.startGame();
+});
 
 //Checks to see if player starts the game
 gameBoard.startButton.addEventListener("click", () => {
-    let timeAmount = 0;
+    gameBoard.startGame();
+    /*let timeAmount = 0;
     gameBoard.startButton.style.display = "none";
     player = new component(70, 50, "blue", 920, 1000, "player");
     player.update();
@@ -95,38 +198,56 @@ gameBoard.startButton.addEventListener("click", () => {
     score.update();
     time.text = "Time: 0";
     time.update();
-    setInterval(function() {
-        timeAmount++;
-        gameBoard.clearBoard();
-        time.text = `Time: ${timeAmount}`;
-        time.update();
-        score.update();
-        player.update();
+    let timeUpdate = setInterval(function() {
+        if(gameOver) {
+            clearInterval(timeUpdate);
+        }
+        else {
+            timeAmount++;
+            gameBoard.clearBoard();
+            time.text = `Time: ${timeAmount}`;
+            time.update();
+            score.update();
+            player.update();
+        }
     }, 1000);
-    setInterval(function() {
-        let x = Math.floor((Math.random() * 1840) + 1);
-        if(x < 100) {
-            x = 100;
-        } 
-        let enemy = new component(70, 50, "green", x, 20, "enemy");
-        setInterval(function() {
-            enemy.newPosition("down");
+    let createEnemies = setInterval(function() {
+        if(gameOver) {
+            clearInterval(createEnemies);
+        }
+        else {
+            let x = Math.floor((Math.random() * 1840) + 1);
+            var enemy = new component(70, 50, "green", x, 20, "enemy");
+            enemy.update();
+            enemies.push(enemy);
+        }
+        let moveEnemies = setInterval(function() {
+            if(gameOver) {
+                clearInterval(moveEnemies);
+            }
+            else {
+                enemy.newPosition("down");
+                enemy.didLeaveCanvas();
+            }
         }, 1000);
-    }, 2000);
+    }, 2000);*/
 });
 
 document.onkeydown = function(e) {
-    if(e.keyCode === 38) {
-        player.newPosition('up');
+    if(!gameOver) {
+        if(e.keyCode === 38) {
+            player.newPosition('up');
+        }
+        else if(e.keyCode === 40) {
+            player.newPosition('down');
+        }
+        else if(e.keyCode === 39) {
+            player.newPosition('right');
+        }
+        else if(e.keyCode === 37) {
+            player.newPosition('left');
+        }
+        player.didCrash();
+        e.preventDefault();
     }
-    else if(e.keyCode === 40) {
-        player.newPosition('down');
-    }
-    else if(e.keyCode === 39) {
-        player.newPosition('right');
-    }
-    else if(e.keyCode === 37) {
-        player.newPosition('left');
-    }
-    e.preventDefault();
 }

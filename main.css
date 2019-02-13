@@ -13,3 +13,18 @@
     margin-left: auto;
     margin-right: auto;
 }
+
+#gameOverHeader {
+    color: red;
+    position: absolute;
+    bottom: 350px;
+    left: 590px;
+    display: none;
+}
+
+#restartButton {
+    position: absolute;
+    left: 645px;
+    bottom: 330px;
+    display: none;
+}
