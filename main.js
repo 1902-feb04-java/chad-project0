@@ -35,8 +35,8 @@ var gameBoard = {
         this.context.globalAlpha = 1.0;
         this.context.fillStyle = "black";
         this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        let timeAmount = 0;
         this.startButton.style.display = "none";
+        let timeAmount = 0;
         player = new component(70, 50, "blue", 920, 1000, "player");
         player.update();
         score = new component("50px", "Arial", "white", 5, 45, "text");
@@ -45,9 +45,6 @@ var gameBoard = {
         score.update();
         time.text = "Time: 0";
         time.update();
-        /* Tommorrow, try to move these interval functions to global scope 
-        and for the moveEnemies function, iterate over the ememies array
-        and then move those elements in the array down*/
         let timeUpdate = setInterval(function() {
             if(gameOver) {
                 clearInterval(timeUpdate);
@@ -83,12 +80,12 @@ var gameBoard = {
         }, 2000);
     },
     endGame: function() {
+        enemies = [];
         this.context.globalAlpha = 0.2;
         this.context.fillStyle = "grey";
         this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
         this.restartButton.style.display = "block";
         this.endGameHeader.style.display = "block";
-        enemies = [];
     }
 }
 
@@ -188,49 +185,6 @@ gameBoard.restartButton.addEventListener("click", () => {
 //Checks to see if player starts the game
 gameBoard.startButton.addEventListener("click", () => {
     gameBoard.startGame();
-    /*let timeAmount = 0;
-    gameBoard.startButton.style.display = "none";
-    player = new component(70, 50, "blue", 920, 1000, "player");
-    player.update();
-    score = new component("50px", "Arial", "white", 5, 45, "text");
-    time = new component("50px", "Arial", "white", 5, 95, "text");
-    score.text = "Score: 0";
-    score.update();
-    time.text = "Time: 0";
-    time.update();
-    let timeUpdate = setInterval(function() {
-        if(gameOver) {
-            clearInterval(timeUpdate);
-        }
-        else {
-            timeAmount++;
-            gameBoard.clearBoard();
-            time.text = `Time: ${timeAmount}`;
-            time.update();
-            score.update();
-            player.update();
-        }
-    }, 1000);
-    let createEnemies = setInterval(function() {
-        if(gameOver) {
-            clearInterval(createEnemies);
-        }
-        else {
-            let x = Math.floor((Math.random() * 1840) + 1);
-            var enemy = new component(70, 50, "green", x, 20, "enemy");
-            enemy.update();
-            enemies.push(enemy);
-        }
-        let moveEnemies = setInterval(function() {
-            if(gameOver) {
-                clearInterval(moveEnemies);
-            }
-            else {
-                enemy.newPosition("down");
-                enemy.didLeaveCanvas();
-            }
-        }, 1000);
-    }, 2000);*/
 });
 
 document.onkeydown = function(e) {
@@ -251,3 +205,5 @@ document.onkeydown = function(e) {
         e.preventDefault();
     }
 }
+
+/*figure out a way for the restart button to wait 10 seconds before it appears*/
