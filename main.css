@@ -28,3 +28,27 @@
     bottom: 330px;
     display: none;
 }
+
+#countDownHeader {
+    color: white;
+    position: absolute;
+    left: 665px;
+    bottom: 300px;
+    display: none;
+}
+
+#finalScoreHeader {
+    color: white;
+    position: absolute;
+    left: 580px;
+    bottom: 540px;
+    display: none;
+}
+
+#finalTimeHeader {
+    color: white;
+    position: absolute;
+    left: 580px;
+    bottom: 490px;
+    display: none;
+}

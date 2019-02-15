@@ -7,18 +7,27 @@ function setUpBoard () {
 
 //The gameboard oject
 var gameBoard = {
+    scoreAmount: 0,
     startButton: document.createElement("button"),
     canvas: document.createElement("canvas"),
     restartButton: document.createElement("button"),
     endGameHeader: document.createElement("h1"),
+    countDownHeader: document.createElement("h1"),
+    finalScoreHeader: document.createElement("h1"),
+    finalTimeHeader: document.createElement("h1"),
     setUpBoard: function() {
         gameOver = false;
         this.restartButton.id = "restartButton";
         this.endGameHeader.id = "gameOverHeader";
         this.startButton.id = "startButton";
+        this.countDownHeader.id = "countDownHeader";
+        this.finalScoreHeader.id = "finalScoreHeader";
+        this.finalTimeHeader.id = "finalTimeHeader";
         this.startButton.innerHTML = "Start";
         this.restartButton.innerHTML = "Restart";
         this.endGameHeader.innerHTML = "Game Over";
+        this.finalTimeHeader.innerHTML = "Final Time: 0";
+        this.finalScoreHeader.innerHTML = "Final Score: 0";
         this.canvas.id = "gameBoard";
         this.canvas.width = "1920";
         this.canvas.height = "1080";
@@ -27,17 +36,20 @@ var gameBoard = {
         document.body.insertBefore(this.startButton, document.body.childNodes[1]);
         document.body.insertBefore(this.restartButton, document.body.childNodes[2]);
         document.body.insertBefore(this.endGameHeader, document.body.childNodes[3]);
+        document.body.insertBefore(this.finalScoreHeader, document.body.childNodes[4]);
+        document.body.insertBefore(this.finalTimeHeader, document.body.childNodes[5]);
     },
     clearBoard: function() {
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     },
     startGame: function() {
+        this.scoreAmount = 0;
         this.context.globalAlpha = 1.0;
         this.context.fillStyle = "black";
         this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
         this.startButton.style.display = "none";
         let timeAmount = 0;
-        player = new component(70, 50, "blue", 920, 1000, "player");
+        player = new component(70, 50, "yellow", 920, 1000, "player");
         player.update();
         score = new component("50px", "Arial", "white", 5, 45, "text");
         time = new component("50px", "Arial", "white", 5, 95, "text");
@@ -53,6 +65,7 @@ var gameBoard = {
                 timeAmount++;
                 gameBoard.clearBoard();
                 time.text = `Time: ${timeAmount}`;
+                this.finalTimeHeader.innerHTML = `Final Time: ${timeAmount}`;
                 time.update();
                 score.update();
                 player.update();
@@ -68,24 +81,54 @@ var gameBoard = {
                 enemy.update();
                 enemies.push(enemy);
             }
-            let moveEnemies = setInterval(function() {
-                if(gameOver) {
-                    clearInterval(moveEnemies);
-                }
-                else {
-                    enemy.newPosition("down");
-                    enemy.didLeaveCanvas();
-                }
-            }, 1000);
         }, 2000);
+        let moveEnemies = setInterval(function() {
+            if(gameOver) {
+                clearInterval(moveEnemies);
+            }
+            else {
+                if(enemies.length > 0) {
+                    for(let e of enemies) {
+                        e.newPosition("down");
+                        e.didLeaveCanvas();
+                        e.didCrash();
+                    }
+                }
+            }
+        }, 1000);
+    },
+    updateScore: function() {
+        this.scoreAmount++;
+        gameBoard.clearBoard();
+        score.text = `Score: ${this.scoreAmount}`;
+        this.finalScoreHeader.innerHTML = `Final Score: ${this.scoreAmount}`;
+        score.update();
+        time.update();
+        player.update();
+        for(let enemy of enemies) {
+            enemy.update();
+        }
     },
     endGame: function() {
         enemies = [];
-        this.context.globalAlpha = 0.2;
-        this.context.fillStyle = "grey";
-        this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        this.restartButton.style.display = "block";
+        gameBoard.clearBoard();
+        this.context.globalAlpha = 0;
+        let countDown = 5;
         this.endGameHeader.style.display = "block";
+        this.countDownHeader.style.display = "block";
+        this.finalScoreHeader.style.display = "block";
+        this.finalTimeHeader.style.display = "block";
+        this.countDownHeader.innerHTML = countDown;
+        document.body.insertBefore(this.countDownHeader, document.body.childNodes[6]);
+        let countDownFunc = setInterval(function() {
+            countDown--;
+            this.countDownHeader.innerHTML = countDown;
+            if(countDown <= 0) {
+                clearInterval(countDownFunc);
+                this.countDownHeader.style.display = "none";
+            }
+        }, 1000)
+        setTimeout(function() {this.restartButton.style.display = "block";}, 5000);
     }
 }
 
@@ -150,15 +193,26 @@ function component(width, height, color, x, y, type) {
         let myRight = this.x + this.width;
         let myTop = this.y;
         let myBottom = this.y + this.height;
-        for(let i = 0; i < enemies.length; i++) {
-            let otherTop = enemies[i].y;
-            let otherBottom = enemies[i].y + enemies[i].height;
-            let otherRight = enemies[i].x + enemies[i].width;
-            let otherLeft = enemies[i].x;
+        if(type === 'enemy') {
+            let otherTop = player.y;
+            let otherBottom = player.y + player.height;
+            let otherRight = player.x + player.width;
+            let otherLeft = player.x;
             if((myBottom > otherTop) && (myTop < otherBottom) && (myRight > otherLeft) && (myLeft < otherRight)) {
                 gameOver = true;
-                gameBoard.clearBoard();
                 gameBoard.endGame();
+            }
+        }
+        else {
+            for(let i = 0; i < enemies.length; i++) {
+                let otherTop = enemies[i].y;
+                let otherBottom = enemies[i].y + enemies[i].height;
+                let otherRight = enemies[i].x + enemies[i].width;
+                let otherLeft = enemies[i].x;
+                if((myBottom > otherTop) && (myTop < otherBottom) && (myRight > otherLeft) && (myLeft < otherRight)) {
+                    gameOver = true;
+                    gameBoard.endGame();
+                }
             }
         }
     }
@@ -170,6 +224,7 @@ function component(width, height, color, x, y, type) {
                 enemies.splice(index, 1);
             }
             context.clearRect(this.x, this.y, this.width, this.height);
+            gameBoard.updateScore();
         }
     }
 }
@@ -178,6 +233,8 @@ function component(width, height, color, x, y, type) {
 gameBoard.restartButton.addEventListener("click", () => {
     document.getElementById("restartButton").style.display = "none";
     document.getElementById("gameOverHeader").style.display = "none";
+    document.getElementById("finalScoreHeader").style.display = "none";
+    document.getElementById("finalTimeHeader").style.display = "none";
     gameOver = false;
     gameBoard.startGame();
 });
@@ -185,25 +242,24 @@ gameBoard.restartButton.addEventListener("click", () => {
 //Checks to see if player starts the game
 gameBoard.startButton.addEventListener("click", () => {
     gameBoard.startGame();
-});
-
-document.onkeydown = function(e) {
-    if(!gameOver) {
-        if(e.keyCode === 38) {
-            player.newPosition('up');
+    document.onkeydown = function(e) {
+        if(!gameOver) {
+            if(e.keyCode === 38) {
+                player.newPosition('up');
+            }
+            else if(e.keyCode === 40) {
+                player.newPosition('down');
+            }
+            else if(e.keyCode === 39) {
+                player.newPosition('right');
+            }
+            else if(e.keyCode === 37) {
+                player.newPosition('left');
+            }
+            player.didCrash();
+            e.preventDefault();
         }
-        else if(e.keyCode === 40) {
-            player.newPosition('down');
-        }
-        else if(e.keyCode === 39) {
-            player.newPosition('right');
-        }
-        else if(e.keyCode === 37) {
-            player.newPosition('left');
-        }
-        player.didCrash();
-        e.preventDefault();
     }
-}
+});
 
 /*figure out a way for the restart button to wait 10 seconds before it appears*/
