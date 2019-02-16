@@ -49,7 +49,7 @@ var gameBoard = {
         this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
         this.startButton.style.display = "none";
         let timeAmount = 0;
-        player = new component(70, 50, "yellow", 920, 1000, "player");
+        player = new component(70, 50, "blue", 920, 1000, "player", 20);
         player.update();
         score = new component("50px", "Arial", "white", 5, 45, "text");
         time = new component("50px", "Arial", "white", 5, 95, "text");
@@ -77,7 +77,11 @@ var gameBoard = {
             }
             else {
                 let x = Math.floor((Math.random() * 1840) + 1);
-                var enemy = new component(70, 50, "green", x, 20, "enemy");
+                let enemy = new component(70, 50, "green", x, -90, "enemy", 20);
+                while(!enemy.validSpawnPoint()) {
+                    x = Math.floor((Math.random() * 1840) + 1);
+                    enemy = new component(70, 50, "green", x, -90, "enemy", 20);
+                }
                 enemy.update();
                 enemies.push(enemy);
             }
@@ -89,7 +93,7 @@ var gameBoard = {
             else {
                 if(enemies.length > 0) {
                     for(let e of enemies) {
-                        e.newPosition("down");
+                        e.newPosition('down');
                         e.didLeaveCanvas();
                         e.didCrash();
                     }
@@ -144,7 +148,7 @@ var enemies = [];
 var gameOver = false;
 
 //function to create all components
-function component(width, height, color, x, y, type) {
+function component(width, height, color, x, y, type, speed) {
     this.width = width;
     this.height = height;
     this.x = x;
@@ -163,30 +167,60 @@ function component(width, height, color, x, y, type) {
     this.newPosition = function(position) {
         let context = gameBoard.context;
         context.clearRect(this.x, this.y, this.width, this.height);
-        if(position === 'up') {
-            if(this.y > 0) {
-                this.y = this.y - 20;
+        if(type === 'enemy') {
+            if(position === 'down') {
+                this.y = this.y + speed;
+            }
+            else if(position === 'left') {
+                if(this.x > 0) {
+                    this.x = this.x - speed;
+                }
+            }
+            else if(position === 'right') {
+                if(this.x < 1840) {
+                    this.x = this.x + speed;
+                }
             }
         }
-        else if(position === 'down') {
-            if(this.y < 1020 && type === "player") {
-                this.y = this.y + 20;
+        else if(type === 'player') {
+            if(position === 'up') {
+                if(this.y > 0) {
+                    this.y = this.y - speed;
+                }
             }
-            else if(type === "enemy") {
-                this.y = this.y + 20;
+            else if(position === 'down') {
+                if(this.y < 1020) {
+                    this.y = this.y + speed;
+                }
             }
-        }
-        else if(position === 'right') {
-            if(this.x < 1840) {
-                this.x = this.x + 20;
+            else if(position === 'right') {
+                if(this.x < 1840) {
+                    this.x = this.x + speed;
+                }
             }
-        }
-        else if(position === 'left') {
-            if(this.x > 0) {
-                this.x = this.x - 20;
+            else if(position === 'left') {
+                if(this.x > 0) {
+                    this.x = this.x - speed;
+                }
             }
         }
         this.update();
+    }
+    this.validSpawnPoint = function() {
+        let myLeft = this.x
+        let myRight = this.x + this.width;
+        let myTop = this.y;
+        let myBottom = this.y + this.height;
+        for(let i = 0; i < enemies.length; i++) {
+            let otherTop = enemies[i].y;
+            let otherBottom = enemies[i].y + enemies[i].height;
+            let otherRight = enemies[i].x + enemies[i].width;
+            let otherLeft = enemies[i].x;
+            if((myBottom > otherTop) && (myTop < otherBottom) && (myRight > otherLeft) && (myLeft < otherRight)) {
+                return false;
+            }
+        }
+        return true;
     }
     this.didCrash = function() {
         let myLeft = this.x
@@ -217,7 +251,7 @@ function component(width, height, color, x, y, type) {
         }
     }
     this.didLeaveCanvas = function() {
-        if(this.y > 1000) {
+        if(this.y >= 1000) {
             let context = gameBoard.context;
             let index  = enemies.indexOf(this);
             if(index > -1) {
@@ -261,5 +295,3 @@ gameBoard.startButton.addEventListener("click", () => {
         }
     }
 });
-
-/*figure out a way for the restart button to wait 10 seconds before it appears*/
