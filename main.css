@@ -52,3 +52,15 @@
     bottom: 490px;
     display: none;
 }
+
+#scoreHeader {
+    position: absolute;
+    bottom: 610px;
+    left: 990px;
+}
+
+#timeHeader {
+    position: absolute;
+    bottom: 590px;
+    left: 990px;
+}

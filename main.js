@@ -15,6 +15,8 @@ var gameBoard = {
     countDownHeader: document.createElement("h1"),
     finalScoreHeader: document.createElement("h1"),
     finalTimeHeader: document.createElement("h1"),
+    scoreHeader: document.createElement("h3"),
+    timeHeader: document.createElement("h3"),
     setUpBoard: function() {
         gameOver = false;
         this.restartButton.id = "restartButton";
@@ -23,11 +25,13 @@ var gameBoard = {
         this.countDownHeader.id = "countDownHeader";
         this.finalScoreHeader.id = "finalScoreHeader";
         this.finalTimeHeader.id = "finalTimeHeader";
+        this.scoreHeader.id = "scoreHeader";
+        this.timeHeader.id = "timeHeader";
         this.startButton.innerHTML = "Start";
         this.restartButton.innerHTML = "Restart";
         this.endGameHeader.innerHTML = "Game Over";
-        this.finalTimeHeader.innerHTML = "Final Time: 0";
-        this.finalScoreHeader.innerHTML = "Final Score: 0";
+        this.timeHeader.innerHTML = "Time: 0";
+        this.scoreHeader.innerHTML = "Score: 0";
         this.canvas.id = "gameBoard";
         this.canvas.width = "1920";
         this.canvas.height = "1080";
@@ -38,6 +42,8 @@ var gameBoard = {
         document.body.insertBefore(this.endGameHeader, document.body.childNodes[3]);
         document.body.insertBefore(this.finalScoreHeader, document.body.childNodes[4]);
         document.body.insertBefore(this.finalTimeHeader, document.body.childNodes[5]);
+        document.body.insertBefore(this.scoreHeader, document.body.childNodes[6]);
+        document.body.insertBefore(this.timeHeader, document.body.childNodes[7]);
     },
     clearBoard: function() {
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -49,43 +55,52 @@ var gameBoard = {
         this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
         this.startButton.style.display = "none";
         let timeAmount = 0;
-        player = new component(70, 50, "blue", 920, 1000, "player", 20);
+        player = new component(70, 50, "yellow", 920, 1000, "player", 20);
         player.update();
-        score = new component("50px", "Arial", "white", 5, 45, "text");
-        time = new component("50px", "Arial", "white", 5, 95, "text");
-        score.text = "Score: 0";
-        score.update();
-        time.text = "Time: 0";
-        time.update();
+        this.timeHeader.innerHTML = `Time: ${timeAmount}`;
+        this.scoreHeader.innerHTML = `Score: ${this.scoreAmount}`;
+        this.finalTimeHeader.innerHTML = `Final Time: ${timeAmount}`;
+        this.finalScoreHeader.innerHTML = `Final Score: ${this.scoreAmount}`;
         let timeUpdate = setInterval(function() {
             if(gameOver) {
                 clearInterval(timeUpdate);
             }
             else {
                 timeAmount++;
-                gameBoard.clearBoard();
-                time.text = `Time: ${timeAmount}`;
+                this.timeHeader.innerHTML = `Time: ${timeAmount}`;
                 this.finalTimeHeader.innerHTML = `Final Time: ${timeAmount}`;
-                time.update();
-                score.update();
-                player.update();
             }
         }, 1000);
-        let createEnemies = setInterval(function() {
+        let createMoreEnemies = function() {
             if(gameOver) {
                 clearInterval(createEnemies);
             }
             else {
+                clearInterval(createEnemies);
+                if(timeAmount >= 0 && timeAmount <= 50) {
+                    createEnemies = setInterval(createMoreEnemies, 1000);
+                }
+                if(timeAmount > 50 && timeAmount <= 100) {
+                    createEnemies = setInterval(createMoreEnemies, 500);
+                }
+                else if(timeAmount > 100) {
+                   createEnemies = setInterval(createMoreEnemies, 300);
+                }
                 let x = Math.floor((Math.random() * 1840) + 1);
-                let enemy = new component(70, 50, "green", x, -90, "enemy", 20);
+                let speed = Math.floor((Math.random() * 70) + 1);
+                if(speed < 50) {
+                    speed = 50;
+                }
+                let enemy = new component(70, 50, "green", x, -90, "enemy", speed);
                 while(!enemy.validSpawnPoint()) {
                     x = Math.floor((Math.random() * 1840) + 1);
-                    enemy = new component(70, 50, "green", x, -90, "enemy", 20);
+                    enemy = new component(70, 50, "green", x, -90, "enemy", speed);
                 }
                 enemy.update();
                 enemies.push(enemy);
             }
-        }, 2000);
+        }
+        let createEnemies = setInterval(createMoreEnemies, 1000);
         let moveEnemies = setInterval(function() {
             if(gameOver) {
                 clearInterval(moveEnemies);
@@ -94,24 +109,27 @@ var gameBoard = {
                 if(enemies.length > 0) {
                     for(let e of enemies) {
                         e.newPosition('down');
+                        let direction = Math.floor((Math.random() * 3) + 1);
+                        if(direction < 2) {
+                            direction = 2;
+                        }
+                        if(direction === 2 && e.x > 0) {
+                            e.newPosition('left');
+                        }
+                        else if(direction === 3 && e.x < 1840) {
+                            e.newPosition('right');
+                        }
                         e.didLeaveCanvas();
                         e.didCrash();
                     }
                 }
             }
-        }, 1000);
+        }, 300);
     },
     updateScore: function() {
         this.scoreAmount++;
-        gameBoard.clearBoard();
-        score.text = `Score: ${this.scoreAmount}`;
+        this.scoreHeader.innerHTML = `Score: ${this.scoreAmount}`;
         this.finalScoreHeader.innerHTML = `Final Score: ${this.scoreAmount}`;
-        score.update();
-        time.update();
-        player.update();
-        for(let enemy of enemies) {
-            enemy.update();
-        }
     },
     endGame: function() {
         enemies = [];
@@ -122,8 +140,10 @@ var gameBoard = {
         this.countDownHeader.style.display = "block";
         this.finalScoreHeader.style.display = "block";
         this.finalTimeHeader.style.display = "block";
+        this.scoreHeader.style.display = "none";
+        this.timeHeader.style.display = "none";
         this.countDownHeader.innerHTML = countDown;
-        document.body.insertBefore(this.countDownHeader, document.body.childNodes[6]);
+        document.body.insertBefore(this.countDownHeader, document.body.childNodes[8]);
         let countDownFunc = setInterval(function() {
             countDown--;
             this.countDownHeader.innerHTML = countDown;
@@ -138,10 +158,6 @@ var gameBoard = {
 
 //The player
 var player;
-//The score
-var score;
-//the time player has played
-var time;
 //array of all enemies on the canvas
 var enemies = [];
 //Var to end the game if true
@@ -156,13 +172,7 @@ function component(width, height, color, x, y, type, speed) {
     this.update = function() {
         let context = gameBoard.context;
         context.fillStyle = color;
-        if(type === "text") {
-            context.font = this.width + " " + this.height;
-            context.fillText(this.text, this.x, this.y);
-        }
-        else {
-            context.fillRect(this.x, this.y, this.width, this.height);
-        }
+        context.fillRect(this.x, this.y, this.width, this.height);
     }
     this.newPosition = function(position) {
         let context = gameBoard.context;
@@ -269,6 +279,8 @@ gameBoard.restartButton.addEventListener("click", () => {
     document.getElementById("gameOverHeader").style.display = "none";
     document.getElementById("finalScoreHeader").style.display = "none";
     document.getElementById("finalTimeHeader").style.display = "none";
+    document.getElementById("scoreHeader").style.display = "block";
+    document.getElementById("timeHeader").style.display = "block";
     gameOver = false;
     gameBoard.startGame();
 });
@@ -295,3 +307,4 @@ gameBoard.startButton.addEventListener("click", () => {
         }
     }
 });
+/*Tomorrow, try to create smoother movement*/
