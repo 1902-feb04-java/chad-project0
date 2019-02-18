@@ -55,7 +55,7 @@ var gameBoard = {
         this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
         this.startButton.style.display = "none";
         let timeAmount = 0;
-        player = new component(70, 50, "yellow", 920, 1000, "player", 20);
+        player = new component(70, 50, "yellow", 920, 1000, "player", 5);
         player.update();
         this.timeHeader.innerHTML = `Time: ${timeAmount}`;
         this.scoreHeader.innerHTML = `Score: ${this.scoreAmount}`;
@@ -163,12 +163,20 @@ var enemies = [];
 //Var to end the game if true
 var gameOver = false;
 
+var keysPressed = {
+    UP: false,
+    DOWN: false,
+    RIGHT: false,
+    LEFT: false
+}
+
 //function to create all components
 function component(width, height, color, x, y, type, speed) {
     this.width = width;
     this.height = height;
     this.x = x;
     this.y = y;
+    this.speed = speed;
     this.update = function() {
         let context = gameBoard.context;
         context.fillStyle = color;
@@ -179,38 +187,38 @@ function component(width, height, color, x, y, type, speed) {
         context.clearRect(this.x, this.y, this.width, this.height);
         if(type === 'enemy') {
             if(position === 'down') {
-                this.y = this.y + speed;
+                this.y = this.y + this.speed;
             }
             else if(position === 'left') {
                 if(this.x > 0) {
-                    this.x = this.x - speed;
+                    this.x = this.x - this.speed;
                 }
             }
             else if(position === 'right') {
                 if(this.x < 1840) {
-                    this.x = this.x + speed;
+                    this.x = this.x + this.speed;
                 }
             }
         }
         else if(type === 'player') {
             if(position === 'up') {
                 if(this.y > 0) {
-                    this.y = this.y - speed;
+                    this.y = this.y - this.speed;
                 }
             }
             else if(position === 'down') {
                 if(this.y < 1020) {
-                    this.y = this.y + speed;
+                    this.y = this.y + this.speed;
                 }
             }
             else if(position === 'right') {
                 if(this.x < 1840) {
-                    this.x = this.x + speed;
+                    this.x = this.x + this.speed;
                 }
             }
             else if(position === 'left') {
                 if(this.x > 0) {
-                    this.x = this.x - speed;
+                    this.x = this.x - this.speed;
                 }
             }
         }
@@ -283,28 +291,83 @@ gameBoard.restartButton.addEventListener("click", () => {
     document.getElementById("timeHeader").style.display = "block";
     gameOver = false;
     gameBoard.startGame();
+    let movePlayer = setInterval(function() {
+        if(gameOver) {
+            clearInterval(movePlayer);
+        }
+        else {
+            if(keysPressed.UP) {
+                player.newPosition('up');
+            }
+            else if(keysPressed.DOWN) {
+                player.newPosition('down');
+            }
+            else if(keysPressed.RIGHT) {
+                player.newPosition('right');
+            }
+            else if(keysPressed.LEFT) {
+                player.newPosition('left');
+            }
+            player.didCrash();
+        }
+    }, 10);
 });
+
+function keyDownHandler(e) {
+    if(e.keyCode === 38) {
+        keysPressed.UP = true;
+    }
+    else if(e.keyCode === 40) {
+        keysPressed.DOWN = true;
+    }
+    else if(e.keyCode === 39) {
+        keysPressed.RIGHT = true;
+    }
+    else if(e.keyCode === 37) {
+        keysPressed.LEFT = true;
+    }
+    e.preventDefault();
+}
+
+function keyUpHandler(e) {
+    if(e.keyCode === 38) {
+        keysPressed.UP = false;
+    }
+    else if(e.keyCode === 40) {
+        keysPressed.DOWN = false;
+    }
+    else if(e.keyCode === 39) {
+        keysPressed.RIGHT = false;
+    }
+    else if(e.keyCode === 37) {
+        keysPressed.LEFT = false;
+    }
+    e.preventDefault();
+}
 
 //Checks to see if player starts the game
 gameBoard.startButton.addEventListener("click", () => {
     gameBoard.startGame();
-    document.onkeydown = function(e) {
-        if(!gameOver) {
-            if(e.keyCode === 38) {
+    document.addEventListener('keydown', keyDownHandler);
+    document.addEventListener('keyup', keyUpHandler);
+    let movePlayer = setInterval(function() {
+        if(gameOver) {
+            clearInterval(movePlayer);
+        }
+        else {
+            if(keysPressed.UP) {
                 player.newPosition('up');
             }
-            else if(e.keyCode === 40) {
+            else if(keysPressed.DOWN) {
                 player.newPosition('down');
             }
-            else if(e.keyCode === 39) {
+            else if(keysPressed.RIGHT) {
                 player.newPosition('right');
             }
-            else if(e.keyCode === 37) {
+            else if(keysPressed.LEFT) {
                 player.newPosition('left');
             }
             player.didCrash();
-            e.preventDefault();
         }
-    }
+    }, 10);
 });
-/*Tomorrow, try to create smoother movement*/
