@@ -13,3 +13,54 @@
     margin-left: auto;
     margin-right: auto;
 }
+
+#gameOverHeader {
+    color: red;
+    position: absolute;
+    bottom: 350px;
+    left: 590px;
+    display: none;
+}
+
+#restartButton {
+    position: absolute;
+    left: 645px;
+    bottom: 330px;
+    display: none;
+}
+
+#countDownHeader {
+    color: white;
+    position: absolute;
+    left: 665px;
+    bottom: 300px;
+    display: none;
+}
+
+#finalScoreHeader {
+    color: white;
+    position: absolute;
+    left: 580px;
+    bottom: 540px;
+    display: none;
+}
+
+#finalTimeHeader {
+    color: white;
+    position: absolute;
+    left: 580px;
+    bottom: 490px;
+    display: none;
+}
+
+#scoreHeader {
+    position: absolute;
+    bottom: 610px;
+    left: 990px;
+}
+
+#timeHeader {
+    position: absolute;
+    bottom: 590px;
+    left: 990px;
+}
